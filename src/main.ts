@@ -27,10 +27,6 @@ class PaceCalculatorApp {
     speedInput: HTMLInputElement
     distanceInput: HTMLInputElement
     timeInput: HTMLInputElement
-    paceLock: HTMLButtonElement
-    speedLock: HTMLButtonElement
-    distanceLock: HTMLButtonElement
-    timeLock: HTMLButtonElement
     imperialToggle: HTMLInputElement
     trackLapToggle: HTMLInputElement
   }
@@ -55,25 +51,25 @@ class PaceCalculatorApp {
       
       <div class="calculator-container">
         <div class="field-row" data-field="pace">
-          <button class="calc-button" id="pace-calc">🎯</button>
+          <span class="calc-icon">🎯</span>
           <div class="field-label">Pace <span class="unit">(min/km)</span></div>
           <input type="text" class="field-input" id="pace-input" placeholder="05:00" inputmode="numeric">
         </div>
 
         <div class="field-row" data-field="speed">
-          <button class="calc-button" id="speed-calc">🎯</button>
+          <span class="calc-icon">🎯</span>
           <div class="field-label">Speed <span class="unit">(km/h)</span></div>
           <input type="text" class="field-input" id="speed-input" placeholder="12.0" inputmode="decimal">
         </div>
 
         <div class="field-row" data-field="distance">
-          <button class="calc-button" id="distance-calc">🎯</button>
+          <span class="calc-icon">🎯</span>
           <div class="field-label">Distance <span class="unit">(km)</span></div>
           <input type="text" class="field-input" id="distance-input" placeholder="10.0" inputmode="decimal">
         </div>
 
         <div class="field-row" data-field="time">
-          <button class="calc-button" id="time-calc">🎯</button>
+          <span class="calc-icon">🎯</span>
           <div class="field-label">Time <span class="unit">(hh:mm:ss)</span></div>
           <input type="text" class="field-input" id="time-input" placeholder="00:50:00" inputmode="numeric">
         </div>
@@ -97,7 +93,7 @@ class PaceCalculatorApp {
       <div class="instructions">
         <h3>How to use:</h3>
         <ul>
-          <li>Click the 🎯 button to select which field you want to <strong>calculate</strong></li>
+          <li>Click on a row to select which field you want to <strong>calculate</strong></li>
           <li>Purple fields show <strong>calculated outputs</strong> - they become read-only</li>
           <li>Gray fields are <strong>inputs</strong> - enter your known values here</li>
           <li><strong>🏃‍♂️ Track Lap Mode:</strong> Enable for 400m track training - shows time in seconds</li>
@@ -116,12 +112,6 @@ class PaceCalculatorApp {
         'distance-input'
       ) as HTMLInputElement,
       timeInput: document.getElementById('time-input') as HTMLInputElement,
-      paceLock: document.getElementById('pace-calc') as HTMLButtonElement,
-      speedLock: document.getElementById('speed-calc') as HTMLButtonElement,
-      distanceLock: document.getElementById(
-        'distance-calc'
-      ) as HTMLButtonElement,
-      timeLock: document.getElementById('time-calc') as HTMLButtonElement,
       imperialToggle: document.getElementById(
         'imperial-toggle'
       ) as HTMLInputElement,
@@ -204,19 +194,27 @@ class PaceCalculatorApp {
       }
     })
 
-    // Calculation button events
-    this.elements.paceLock.addEventListener('click', () =>
-      this.toggleCalculatedField('pace')
-    )
-    this.elements.speedLock.addEventListener('click', () =>
-      this.toggleCalculatedField('speed')
-    )
-    this.elements.distanceLock.addEventListener('click', () =>
-      this.toggleCalculatedField('distance')
-    )
-    this.elements.timeLock.addEventListener('click', () =>
-      this.toggleCalculatedField('time')
-    )
+    // Make entire field rows clickable (except when clicking on input fields)
+    const fieldRows = document.querySelectorAll('.field-row')
+    fieldRows.forEach(row => {
+      row.addEventListener('click', e => {
+        const target = e.target as HTMLElement
+        // Don't trigger if clicking on input field or if it's the track-lap-hidden distance field
+        if (
+          target.classList.contains('field-input') ||
+          row.classList.contains('track-lap-hidden')
+        ) {
+          return
+        }
+
+        const field = row.getAttribute('data-field')
+        if (field) {
+          this.toggleCalculatedField(
+            field as 'pace' | 'speed' | 'distance' | 'time'
+          )
+        }
+      })
+    })
 
     // Unit system toggle
     this.elements.imperialToggle.addEventListener('change', () => {
@@ -408,9 +406,6 @@ class PaceCalculatorApp {
 
     individualFields.forEach(field => {
       const row = document.querySelector(`[data-field="${field}"]`)
-      const calcButton = this.elements[
-        `${field}Lock` as keyof typeof this.elements
-      ] as HTMLButtonElement
       const input = this.elements[
         `${field}Input` as keyof typeof this.elements
       ] as HTMLInputElement
@@ -431,24 +426,18 @@ class PaceCalculatorApp {
       if (this.state.isTrackLap && field === 'distance') {
         row?.classList.add('calculated')
         row?.classList.remove('input-field')
-        calcButton.classList.add('calculated')
-        calcButton.classList.remove('input')
         input.disabled = true
         input.tabIndex = -1
       } else if (isCalculated) {
         // This field is calculated (output)
         row?.classList.add('calculated')
         row?.classList.remove('input-field')
-        calcButton.classList.add('calculated')
-        calcButton.classList.remove('input')
         input.disabled = true
         input.tabIndex = -1 // Remove from tab order
       } else {
         // This field is input
         row?.classList.remove('calculated')
         row?.classList.add('input-field')
-        calcButton.classList.remove('calculated')
-        calcButton.classList.add('input')
         input.disabled = false
         input.tabIndex = 0 // Add back to tab order
       }

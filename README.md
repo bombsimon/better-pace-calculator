@@ -7,7 +7,8 @@ runners.
 
 - **Dual Unit System Support**: Toggle between metric (km/h, min/km, km) and
   imperial (mph, min/mile, miles) units
-- **🏃‍♂️ 400m Track Lap Mode**: Special mode for track training with time displayed in seconds
+- **🏃‍♂️ 400m Track Lap Mode**: Special mode for track training with time
+  displayed in seconds
 - **Pace ↔ Speed Conversion**: Convert between pace and speed with automatic
   unit conversion
 - **Time Calculation**: Calculate running time based on pace and distance

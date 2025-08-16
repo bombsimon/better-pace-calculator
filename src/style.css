@@ -53,6 +53,11 @@ h1 {
   border-radius: 8px;
   border: 2px solid transparent;
   transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.field-row:hover:not(.track-lap-hidden):not(.calculated) {
+  background: #e9ecef;
 }
 
 .field-row.calculated {
@@ -60,28 +65,16 @@ h1 {
   border-color: #9c27b0;
 }
 
-.calc-button {
-  background: none;
-  border: none;
-  cursor: pointer;
+.calc-icon {
   padding: 0.5rem;
-  border-radius: 4px;
-  transition: all 0.2s ease;
   font-size: 1.2rem;
   flex-shrink: 0;
-}
-
-.calc-button:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.calc-button.calculated {
-  color: #9c27b0;
-  background: #f3e5f5;
-}
-
-.calc-button.input {
   color: #ccc;
+  transition: color 0.2s ease;
+}
+
+.field-row.calculated .calc-icon {
+  color: #9c27b0;
 }
 
 .field-label {
@@ -105,6 +98,7 @@ h1 {
   font-size: 1rem;
   transition: border-color 0.2s ease;
   min-width: 0;
+  cursor: text;
 }
 
 .field-input:focus {
@@ -119,6 +113,7 @@ h1 {
   border: none;
   font-weight: 500;
   cursor: default;
+  pointer-events: none;
 }
 
 .field-input:disabled:focus {
@@ -221,8 +216,7 @@ h1 {
   border-color: transparent;
 }
 
-.field-row.track-lap-hidden .calc-button.calculated {
-  background: #f8f9fa;
+.field-row.track-lap-hidden .calc-icon {
   color: #999;
 }
 

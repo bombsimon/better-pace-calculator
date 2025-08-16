@@ -105,23 +105,13 @@ describe('PaceCalculatorApp DOM Elements', () => {
     expect(timeInput.type).toBe('text')
   })
 
-  it('should create all required calc buttons', () => {
-    const paceCalc = document.getElementById('pace-calc') as HTMLButtonElement
-    const speedCalc = document.getElementById('speed-calc') as HTMLButtonElement
-    const distanceCalc = document.getElementById(
-      'distance-calc'
-    ) as HTMLButtonElement
-    const timeCalc = document.getElementById('time-calc') as HTMLButtonElement
+  it('should create all required calc icons', () => {
+    const calcIcons = document.querySelectorAll('.calc-icon')
 
-    expect(paceCalc).toBeTruthy()
-    expect(speedCalc).toBeTruthy()
-    expect(distanceCalc).toBeTruthy()
-    expect(timeCalc).toBeTruthy()
-
-    expect(paceCalc.textContent).toBe('🎯')
-    expect(speedCalc.textContent).toBe('🎯')
-    expect(distanceCalc.textContent).toBe('🎯')
-    expect(timeCalc.textContent).toBe('🎯')
+    expect(calcIcons).toHaveLength(4)
+    calcIcons.forEach(icon => {
+      expect(icon.textContent).toBe('🎯')
+    })
   })
 
   it('should have proper field labels and units', () => {
@@ -190,12 +180,8 @@ describe('PaceCalculatorApp DOM Elements', () => {
 
   it('should have distance calculated by default', () => {
     const calculatedRows = document.querySelectorAll('.field-row.calculated')
-    const calculatedButtons = document.querySelectorAll(
-      '.calc-button.calculated'
-    )
 
     expect(calculatedRows).toHaveLength(1) // distance row
-    expect(calculatedButtons).toHaveLength(1) // distance button
 
     // Check that distance is specifically calculated
     const distanceRow = document.querySelector('[data-field="distance"]')
@@ -206,10 +192,9 @@ describe('PaceCalculatorApp DOM Elements', () => {
     expect(speedRow?.classList.contains('calculated')).toBe(false)
   })
 
-  it('should respond to calc button clicks', () => {
-    const paceCalc = document.getElementById('pace-calc') as HTMLButtonElement
+  it('should respond to field row clicks', () => {
+    const paceRow = document.querySelector('[data-field="pace"]') as HTMLElement
     const distanceRow = document.querySelector('[data-field="distance"]')
-    const paceRow = document.querySelector('[data-field="pace"]')
     const speedRow = document.querySelector('[data-field="speed"]')
 
     // Initially distance is calculated, pace and speed are not
@@ -217,8 +202,8 @@ describe('PaceCalculatorApp DOM Elements', () => {
     expect(paceRow?.classList.contains('calculated')).toBe(false)
     expect(speedRow?.classList.contains('calculated')).toBe(false)
 
-    // Click the pace calc button
-    paceCalc.click()
+    // Click the pace row
+    paceRow.click()
 
     // Now pace and speed should be calculated, distance should not
     expect(paceRow?.classList.contains('calculated')).toBe(true)
@@ -273,8 +258,8 @@ describe('PaceCalculatorApp Input Handling', () => {
     expect(distanceInput.disabled).toBe(true)
 
     // But we can test that when we switch to calculating something else, distance becomes editable
-    const paceCalc = document.getElementById('pace-calc') as HTMLButtonElement
-    paceCalc.click() // Switch to calculating pace/speed
+    const paceRow = document.querySelector('[data-field="pace"]') as HTMLElement
+    paceRow.click() // Switch to calculating pace/speed
 
     expect(distanceInput.disabled).toBe(false)
 
