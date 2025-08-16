@@ -39,7 +39,22 @@ export class NumericInput {
       return
     }
 
-    // Allow: numbers, backspace, delete, tab, escape, enter, home, end, arrows, decimal point
+    // Handle comma as decimal separator (convert to period)
+    if (
+      e.key === ',' &&
+      value.indexOf('.') === -1 &&
+      value.indexOf(',') === -1
+    ) {
+      e.preventDefault()
+      const newValue =
+        value.slice(0, selectionStart) + '.' + value.slice(selectionEnd)
+      target.value = newValue
+      target.setSelectionRange(selectionStart + 1, selectionStart + 1)
+      target.dispatchEvent(new Event('input', { bubbles: true }))
+      return
+    }
+
+    // Allow: numbers, backspace, delete, tab, escape, enter, home, end, arrows, decimal separators
     if (
       // Numbers
       (e.key >= '0' && e.key <= '9') ||
@@ -48,7 +63,7 @@ export class NumericInput {
       // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z
       (e.ctrlKey && ['a', 'c', 'v', 'x', 'z'].includes(e.key.toLowerCase())) ||
       // Allow decimal point if none exists
-      (e.key === '.' && value.indexOf('.') === -1)
+      (e.key === '.' && value.indexOf('.') === -1 && value.indexOf(',') === -1)
     ) {
       return
     }
@@ -61,6 +76,9 @@ export class NumericInput {
     const target = e.target as HTMLInputElement
     let value = target.value
     const cursorPos = target.selectionStart || 0
+
+    // Convert comma to period for decimal separator
+    value = value.replace(',', '.')
 
     // Remove any non-numeric characters except decimal point
     const cleanValue = value.replace(/[^0-9.]/g, '')
