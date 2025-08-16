@@ -17,6 +17,7 @@ interface AppState {
   calculatedField: CalculatedField
   unitSystem: UnitSystem
   activeInput?: string
+  isTrackLap: boolean
 }
 
 class PaceCalculatorApp {
@@ -31,12 +32,14 @@ class PaceCalculatorApp {
     distanceLock: HTMLButtonElement
     timeLock: HTMLButtonElement
     imperialToggle: HTMLInputElement
+    trackLapToggle: HTMLInputElement
   }
   constructor() {
     this.state = {
       data: { pace: 5, speed: 12, distance: 10, time: 50 },
       calculatedField: 'distance',
       unitSystem: 'metric',
+      isTrackLap: false,
     }
 
     this.initializeDOM()
@@ -76,6 +79,14 @@ class PaceCalculatorApp {
         </div>
       </div>
 
+      <div class="track-lap-mode">
+        <label class="track-lap-toggle">
+          <input type="checkbox" id="track-lap-toggle">
+          <span class="track-lap-icon">🏃‍♂️</span>
+          400m Track Lap Mode
+        </label>
+      </div>
+
       <div class="unit-toggle">
         <label>
           <input type="checkbox" id="imperial-toggle">
@@ -89,10 +100,11 @@ class PaceCalculatorApp {
           <li>Click the 🎯 button to select which field you want to <strong>calculate</strong></li>
           <li>Purple fields show <strong>calculated outputs</strong> - they become read-only</li>
           <li>Gray fields are <strong>inputs</strong> - enter your known values here</li>
+          <li><strong>🏃‍♂️ Track Lap Mode:</strong> Enable for 400m track training - shows time in seconds</li>
           <li>Toggle between metric (km/h, min/km) and imperial (mph, min/mile) units</li>
           <li>Pace and speed are linked - calculating one updates both</li>
           <li>Enter pace as minutes:seconds (e.g., 05:30 for 5min 30sec per km/mile)</li>
-          <li>Enter time as hours:minutes:seconds (e.g., 01:30:00 for 1h 30m)</li>
+          <li>Enter time as hours:minutes:seconds (normal) or seconds only (track lap mode)</li>
         </ul>
       </div>
     `
@@ -113,13 +125,48 @@ class PaceCalculatorApp {
       imperialToggle: document.getElementById(
         'imperial-toggle'
       ) as HTMLInputElement,
+      trackLapToggle: document.getElementById(
+        'track-lap-toggle'
+      ) as HTMLInputElement,
     }
 
     // Initialize input handlers
     new SegmentedTimeInput(this.elements.paceInput, false)
-    new SegmentedTimeInput(this.elements.timeInput, true)
+    this.initializeTimeInputHandler()
     new NumericInput(this.elements.speedInput, 2)
     new NumericInput(this.elements.distanceInput, 2)
+  }
+
+  private initializeTimeInputHandler() {
+    if (this.state.isTrackLap) {
+      new NumericInput(this.elements.timeInput, 0)
+    } else {
+      new SegmentedTimeInput(this.elements.timeInput, true)
+    }
+  }
+
+  private reinitializeTimeInputHandler() {
+    // Remove existing event listeners by replacing the element
+    const oldTimeInput = this.elements.timeInput
+    const newTimeInput = oldTimeInput.cloneNode(true) as HTMLInputElement
+    oldTimeInput.parentNode?.replaceChild(newTimeInput, oldTimeInput)
+    this.elements.timeInput = newTimeInput
+
+    // Initialize new handler
+    this.initializeTimeInputHandler()
+
+    // Re-bind the input event
+    this.elements.timeInput.addEventListener('input', () => {
+      let time: number
+      if (this.state.isTrackLap) {
+        time = this.parseTimeFromSeconds(this.elements.timeInput.value)
+      } else {
+        time = parseTime(this.elements.timeInput.value)
+      }
+      if (time > 0) {
+        this.updateField('time', time)
+      }
+    })
   }
 
   private bindEvents() {
@@ -146,7 +193,12 @@ class PaceCalculatorApp {
     })
 
     this.elements.timeInput.addEventListener('input', () => {
-      const time = parseTime(this.elements.timeInput.value)
+      let time: number
+      if (this.state.isTrackLap) {
+        time = this.parseTimeFromSeconds(this.elements.timeInput.value)
+      } else {
+        time = parseTime(this.elements.timeInput.value)
+      }
       if (time > 0) {
         this.updateField('time', time)
       }
@@ -169,6 +221,11 @@ class PaceCalculatorApp {
     // Unit system toggle
     this.elements.imperialToggle.addEventListener('change', () => {
       this.toggleUnitSystem()
+    })
+
+    // Track lap toggle
+    this.elements.trackLapToggle.addEventListener('change', () => {
+      this.toggleTrackLap()
     })
 
     // Track active input to avoid overriding user typing
@@ -229,8 +286,64 @@ class PaceCalculatorApp {
         time: this.state.data.time, // Time doesn't change
       }
       this.state.unitSystem = newUnitSystem
+
+      // Update track lap distance if enabled
+      if (this.state.isTrackLap) {
+        this.setTrackLapDistance()
+      }
+
       this.updateUI()
     }
+  }
+
+  private toggleTrackLap() {
+    this.state.isTrackLap = this.elements.trackLapToggle.checked
+
+    // Reinitialize time input handler for new mode
+    this.reinitializeTimeInputHandler()
+
+    if (this.state.isTrackLap) {
+      // Store current pace to preserve it
+      const currentPace = this.state.data.pace
+      const currentSpeed = this.state.data.speed
+
+      this.setTrackLapDistance()
+
+      // If distance is currently being calculated, switch to calculating pace/speed instead
+      if (this.state.calculatedField === 'distance') {
+        this.state.calculatedField = 'pace-speed'
+      }
+
+      // Preserve pace/speed and recalculate time based on new distance
+      this.state.data = {
+        ...this.state.data,
+        pace: currentPace,
+        speed: currentSpeed,
+        time: currentPace * this.state.data.distance, // time = pace × distance
+      }
+    } else {
+      // When turning off track lap mode, preserve pace and let user adjust distance
+      // No automatic recalculation needed - let user enter their desired distance
+    }
+
+    this.updateUI()
+  }
+
+  private setTrackLapDistance() {
+    // 400m = 0.4km in metric, 0.25 miles in imperial (approximately)
+    const trackDistance = this.state.unitSystem === 'metric' ? 0.4 : 0.248548
+    this.state.data = { ...this.state.data, distance: trackDistance }
+  }
+
+  private formatTimeForTrackLap(minutes: number): string {
+    const totalSeconds = Math.round(minutes * 60)
+    return totalSeconds.toString()
+  }
+
+  private parseTimeFromSeconds(secondsString: string): number {
+    const seconds = parseFloat(secondsString)
+    if (isNaN(seconds) || seconds <= 0) return 0
+    return seconds / 60 // Convert to minutes
   }
 
   private updateUI() {
@@ -241,17 +354,24 @@ class PaceCalculatorApp {
       this.elements.speedInput.value = this.state.data.speed.toFixed(2)
     }
 
-    if (this.state.activeInput !== 'distance-input') {
+    if (this.state.activeInput !== 'distance-input' || this.state.isTrackLap) {
       this.elements.distanceInput.value = this.state.data.distance.toFixed(2)
     }
 
-    this.elements.timeInput.value = formatTime(this.state.data.time)
+    if (this.state.isTrackLap) {
+      this.elements.timeInput.value = this.formatTimeForTrackLap(
+        this.state.data.time
+      )
+    } else {
+      this.elements.timeInput.value = formatTime(this.state.data.time)
+    }
 
-    // Update unit labels based on current unit system
+    // Update unit labels based on current unit system and track lap mode
     const isImperial = this.state.unitSystem === 'imperial'
     const paceUnit = isImperial ? '(min/mile)' : '(min/km)'
     const speedUnit = isImperial ? '(mph)' : '(km/h)'
     const distanceUnit = isImperial ? '(miles)' : '(km)'
+    const timeUnit = this.state.isTrackLap ? '(seconds)' : '(hh:mm:ss)'
 
     document.querySelector(
       '[data-field="pace"] .field-label .unit'
@@ -262,6 +382,26 @@ class PaceCalculatorApp {
     document.querySelector(
       '[data-field="distance"] .field-label .unit'
     )!.textContent = distanceUnit
+    document.querySelector(
+      '[data-field="time"] .field-label .unit'
+    )!.textContent = timeUnit
+
+    // Update track lap mode display
+    const distanceRow = document.querySelector('[data-field="distance"]')
+    const distanceInput = this.elements.distanceInput
+    const timeInput = this.elements.timeInput
+
+    if (this.state.isTrackLap) {
+      distanceRow?.classList.add('track-lap-hidden')
+      distanceInput.placeholder = '🏃‍♂️ 400m'
+      timeInput.placeholder = '87'
+      timeInput.inputMode = 'numeric'
+    } else {
+      distanceRow?.classList.remove('track-lap-hidden')
+      distanceInput.placeholder = '10.0'
+      timeInput.placeholder = '00:50:00'
+      timeInput.inputMode = 'numeric'
+    }
 
     // Update calculation states and input/output modes
     const individualFields = ['pace', 'speed', 'distance', 'time']
@@ -287,7 +427,15 @@ class PaceCalculatorApp {
         isCalculated = true
       }
 
-      if (isCalculated) {
+      // Special handling for distance in track lap mode
+      if (this.state.isTrackLap && field === 'distance') {
+        row?.classList.add('calculated')
+        row?.classList.remove('input-field')
+        calcButton.classList.add('calculated')
+        calcButton.classList.remove('input')
+        input.disabled = true
+        input.tabIndex = -1
+      } else if (isCalculated) {
         // This field is calculated (output)
         row?.classList.add('calculated')
         row?.classList.remove('input-field')

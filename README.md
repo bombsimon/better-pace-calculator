@@ -7,6 +7,7 @@ runners.
 
 - **Dual Unit System Support**: Toggle between metric (km/h, min/km, km) and
   imperial (mph, min/mile, miles) units
+- **🏃‍♂️ 400m Track Lap Mode**: Special mode for track training with time displayed in seconds
 - **Pace ↔ Speed Conversion**: Convert between pace and speed with automatic
   unit conversion
 - **Time Calculation**: Calculate running time based on pace and distance
@@ -22,14 +23,19 @@ runners.
 
 1. **Choose Unit System**: Toggle between metric and imperial units using the
    checkbox
-2. **Choose What to Calculate**: Click 🎯 to select which field you want to
+2. **🏃‍♂️ Track Lap Mode**: Enable "400m Track Lap Mode" for track training:
+   - Automatically sets distance to 400m (0.4km or ~0.25mi)
+   - Time displays in seconds for easy lap timing
+   - Preserves your current pace when toggling on/off
+   - Perfect for track workouts and interval training
+3. **Choose What to Calculate**: Click 🎯 to select which field you want to
    **calculate**:
    - **Pace/Speed** (linked together since they're directly related)
-   - **Distance**
+   - **Distance** (disabled in track lap mode since it's always 400m)
    - **Time**
-3. **Enter Input Values**: Fill in the other fields to provide the data for
+4. **Enter Input Values**: Fill in the other fields to provide the data for
    calculation
-4. **See Results**: Watch as the selected field updates automatically based on
+5. **See Results**: Watch as the selected field updates automatically based on
    your inputs
 
 ### Input Formats
@@ -40,7 +46,9 @@ runners.
   `7.82` mph depending on unit system)
 - **Distance**: Enter as decimal with up to 2 decimal places (e.g., `10.22` km
   or `6.35` miles depending on unit system)
-- **Time**: Always enter as hours:minutes:seconds (e.g., `01:30:00` for 1h 30m)
+- **Time**:
+  - **Normal mode**: Enter as hours:minutes:seconds (e.g., `01:30:00` for 1h 30m)
+  - **Track lap mode**: Enter as seconds only (e.g., `87` for 87 seconds)
 
 ## Development
 
