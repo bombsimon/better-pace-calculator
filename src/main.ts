@@ -11,6 +11,7 @@ import {
   convertPace,
 } from './calculator'
 import { SegmentedTimeInput, NumericInput } from './inputHandler'
+import { DynamicSlider, SLIDER_CONFIGS } from './dynamicSlider'
 
 interface AppState {
   data: PaceData
@@ -23,6 +24,7 @@ interface AppState {
 class PaceCalculatorApp {
   private state: AppState
   private isDragging: boolean = false
+  private sliders: Map<string, DynamicSlider> = new Map()
   private elements!: {
     paceInput: HTMLInputElement
     speedInput: HTMLInputElement
@@ -51,28 +53,48 @@ class PaceCalculatorApp {
       <h1>🏃‍♂️ Running Pace Calculator</h1>
       
       <div class="calculator-container">
-        <div class="field-row" data-field="pace">
-          <span class="calc-icon">🎯</span>
-          <div class="field-label">Pace <span class="unit">(min/km)</span></div>
-          <input type="text" class="field-input" id="pace-input" placeholder="05:00" inputmode="numeric">
+        <div class="field-group" data-field="pace">
+          <div class="field-row">
+            <div class="field-input-row">
+              <span class="calc-icon">🎯</span>
+              <div class="field-label">Pace <span class="unit">(min/km)</span></div>
+              <input type="text" class="field-input" id="pace-input" placeholder="05:00" inputmode="numeric">
+            </div>
+            <div class="slider-container" id="pace-slider-container"></div>
+          </div>
         </div>
 
-        <div class="field-row" data-field="speed">
-          <span class="calc-icon">🎯</span>
-          <div class="field-label">Speed <span class="unit">(km/h)</span></div>
-          <input type="text" class="field-input" id="speed-input" placeholder="12.0" inputmode="decimal">
+        <div class="field-group" data-field="speed">
+          <div class="field-row">
+            <div class="field-input-row">
+              <span class="calc-icon">🎯</span>
+              <div class="field-label">Speed <span class="unit">(km/h)</span></div>
+              <input type="text" class="field-input" id="speed-input" placeholder="12.0" inputmode="decimal">
+            </div>
+            <div class="slider-container" id="speed-slider-container"></div>
+          </div>
         </div>
 
-        <div class="field-row" data-field="distance">
-          <span class="calc-icon">🎯</span>
-          <div class="field-label">Distance <span class="unit">(km)</span></div>
-          <input type="text" class="field-input" id="distance-input" placeholder="10.0" inputmode="decimal">
+        <div class="field-group" data-field="distance">
+          <div class="field-row">
+            <div class="field-input-row">
+              <span class="calc-icon">🎯</span>
+              <div class="field-label">Distance <span class="unit">(km)</span></div>
+              <input type="text" class="field-input" id="distance-input" placeholder="10.0" inputmode="decimal">
+            </div>
+            <div class="slider-container" id="distance-slider-container"></div>
+          </div>
         </div>
 
-        <div class="field-row" data-field="time">
-          <span class="calc-icon">🎯</span>
-          <div class="field-label">Time <span class="unit">(hh:mm:ss)</span></div>
-          <input type="text" class="field-input" id="time-input" placeholder="00:50:00" inputmode="numeric">
+        <div class="field-group" data-field="time">
+          <div class="field-row">
+            <div class="field-input-row">
+              <span class="calc-icon">🎯</span>
+              <div class="field-label">Time <span class="unit">(hh:mm:ss)</span></div>
+              <input type="text" class="field-input" id="time-input" placeholder="00:50:00" inputmode="numeric">
+            </div>
+            <div class="slider-container" id="time-slider-container"></div>
+          </div>
         </div>
       </div>
 
@@ -126,6 +148,58 @@ class PaceCalculatorApp {
     this.initializeTimeInputHandler()
     new NumericInput(this.elements.speedInput, 2)
     new NumericInput(this.elements.distanceInput, 2)
+
+    // Initialize sliders
+    this.initializeSliders()
+  }
+
+  private initializeSliders() {
+    const unitSystem = this.state.unitSystem
+
+    // Pace slider
+    const paceContainer = document.getElementById('pace-slider-container')!
+    const paceSlider = new DynamicSlider(
+      paceContainer,
+      SLIDER_CONFIGS.pace[unitSystem],
+      this.state.data.pace,
+      value => this.updateField('pace', value)
+    )
+    this.sliders.set('pace', paceSlider)
+
+    // Speed slider
+    const speedContainer = document.getElementById('speed-slider-container')!
+    const speedSlider = new DynamicSlider(
+      speedContainer,
+      SLIDER_CONFIGS.speed[unitSystem],
+      this.state.data.speed,
+      value => this.updateField('speed', value)
+    )
+    this.sliders.set('speed', speedSlider)
+
+    // Distance slider
+    const distanceContainer = document.getElementById(
+      'distance-slider-container'
+    )!
+    const distanceSlider = new DynamicSlider(
+      distanceContainer,
+      SLIDER_CONFIGS.distance[unitSystem],
+      this.state.data.distance,
+      value => this.updateField('distance', value)
+    )
+    this.sliders.set('distance', distanceSlider)
+
+    // Time slider - use track lap config if in track lap mode
+    const timeContainer = document.getElementById('time-slider-container')!
+    const timeConfig = this.state.isTrackLap
+      ? SLIDER_CONFIGS.timeTrackLap[unitSystem]
+      : SLIDER_CONFIGS.time[unitSystem]
+    const timeSlider = new DynamicSlider(
+      timeContainer,
+      timeConfig,
+      this.state.data.time,
+      value => this.updateField('time', value)
+    )
+    this.sliders.set('time', timeSlider)
   }
 
   private initializeTimeInputHandler() {
@@ -207,15 +281,16 @@ class PaceCalculatorApp {
     })
 
     // Make entire field rows clickable (except when clicking on input fields)
-    const fieldRows = document.querySelectorAll('.field-row')
-    fieldRows.forEach(row => {
-      row.addEventListener('click', e => {
+    const fieldGroups = document.querySelectorAll('.field-group')
+    fieldGroups.forEach(group => {
+      const fieldInputRow = group.querySelector('.field-input-row')
+      fieldInputRow?.addEventListener('click', e => {
         const target = e.target as HTMLElement
 
         // Don't trigger if clicking on input field or if it's the track-lap-hidden distance field
         if (
           target.classList.contains('field-input') ||
-          row.classList.contains('track-lap-hidden')
+          group.classList.contains('track-lap-hidden')
         ) {
           return
         }
@@ -226,7 +301,7 @@ class PaceCalculatorApp {
           return
         }
 
-        const field = row.getAttribute('data-field')
+        const field = group.getAttribute('data-field')
         if (field) {
           this.toggleCalculatedField(
             field as 'pace' | 'speed' | 'distance' | 'time'
@@ -309,8 +384,34 @@ class PaceCalculatorApp {
         this.setTrackLapDistance()
       }
 
+      // Update slider configurations for new unit system
+      this.updateSliderConfigs()
+
       this.updateUI()
     }
+  }
+
+  private updateSliderConfigs() {
+    const unitSystem = this.state.unitSystem
+
+    this.sliders
+      .get('pace')
+      ?.updateConfig(SLIDER_CONFIGS.pace[unitSystem], this.state.data.pace)
+    this.sliders
+      .get('speed')
+      ?.updateConfig(SLIDER_CONFIGS.speed[unitSystem], this.state.data.speed)
+    this.sliders
+      .get('distance')
+      ?.updateConfig(
+        SLIDER_CONFIGS.distance[unitSystem],
+        this.state.data.distance
+      )
+
+    // Use special track lap config for time in track lap mode
+    const timeConfig = this.state.isTrackLap
+      ? SLIDER_CONFIGS.timeTrackLap[unitSystem]
+      : SLIDER_CONFIGS.time[unitSystem]
+    this.sliders.get('time')?.updateConfig(timeConfig, this.state.data.time)
   }
 
   private toggleTrackLap() {
@@ -342,6 +443,9 @@ class PaceCalculatorApp {
       // When turning off track lap mode, preserve pace and let user adjust distance
       // No automatic recalculation needed - let user enter their desired distance
     }
+
+    // Update slider configurations since track lap mode affects time slider
+    this.updateSliderConfigs()
 
     this.updateUI()
   }
@@ -383,6 +487,12 @@ class PaceCalculatorApp {
       this.elements.timeInput.value = formatTime(this.state.data.time)
     }
 
+    // Update slider values
+    this.sliders.get('pace')?.setValue(this.state.data.pace)
+    this.sliders.get('speed')?.setValue(this.state.data.speed)
+    this.sliders.get('distance')?.setValue(this.state.data.distance)
+    this.sliders.get('time')?.setValue(this.state.data.time)
+
     // Update unit labels based on current unit system and track lap mode
     const isImperial = this.state.unitSystem === 'imperial'
     const paceUnit = isImperial ? '(min/mile)' : '(min/km)'
@@ -404,17 +514,17 @@ class PaceCalculatorApp {
     )!.textContent = timeUnit
 
     // Update track lap mode display
-    const distanceRow = document.querySelector('[data-field="distance"]')
+    const distanceGroup = document.querySelector('[data-field="distance"]')
     const distanceInput = this.elements.distanceInput
     const timeInput = this.elements.timeInput
 
     if (this.state.isTrackLap) {
-      distanceRow?.classList.add('track-lap-hidden')
+      distanceGroup?.classList.add('track-lap-hidden')
       distanceInput.placeholder = '🏃‍♂️ 400m'
       timeInput.placeholder = '87'
       timeInput.inputMode = 'numeric'
     } else {
-      distanceRow?.classList.remove('track-lap-hidden')
+      distanceGroup?.classList.remove('track-lap-hidden')
       distanceInput.placeholder = '10.0'
       timeInput.placeholder = '00:50:00'
       timeInput.inputMode = 'numeric'
@@ -424,7 +534,7 @@ class PaceCalculatorApp {
     const individualFields = ['pace', 'speed', 'distance', 'time']
 
     individualFields.forEach(field => {
-      const row = document.querySelector(`[data-field="${field}"]`)
+      const group = document.querySelector(`[data-field="${field}"]`)
       const input = this.elements[
         `${field}Input` as keyof typeof this.elements
       ] as HTMLInputElement
@@ -443,20 +553,20 @@ class PaceCalculatorApp {
 
       // Special handling for distance in track lap mode
       if (this.state.isTrackLap && field === 'distance') {
-        row?.classList.add('calculated')
-        row?.classList.remove('input-field')
+        group?.classList.add('calculated')
+        group?.classList.remove('input-field')
         input.disabled = true
         input.tabIndex = -1
       } else if (isCalculated) {
         // This field is calculated (output)
-        row?.classList.add('calculated')
-        row?.classList.remove('input-field')
+        group?.classList.add('calculated')
+        group?.classList.remove('input-field')
         input.disabled = true
         input.tabIndex = -1 // Remove from tab order
       } else {
         // This field is input
-        row?.classList.remove('calculated')
-        row?.classList.add('input-field')
+        group?.classList.remove('calculated')
+        group?.classList.add('input-field')
         input.disabled = false
         input.tabIndex = 0 // Add back to tab order
       }
