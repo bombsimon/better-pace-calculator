@@ -179,36 +179,43 @@ describe('PaceCalculatorApp DOM Elements', () => {
   })
 
   it('should have distance calculated by default', () => {
-    const calculatedRows = document.querySelectorAll('.field-row.calculated')
+    const calculatedGroups = document.querySelectorAll(
+      '.field-group.calculated'
+    )
 
-    expect(calculatedRows).toHaveLength(1) // distance row
+    expect(calculatedGroups).toHaveLength(1) // distance group
 
     // Check that distance is specifically calculated
-    const distanceRow = document.querySelector('[data-field="distance"]')
-    const paceRow = document.querySelector('[data-field="pace"]')
-    const speedRow = document.querySelector('[data-field="speed"]')
-    expect(distanceRow?.classList.contains('calculated')).toBe(true)
-    expect(paceRow?.classList.contains('calculated')).toBe(false)
-    expect(speedRow?.classList.contains('calculated')).toBe(false)
+    const distanceGroup = document.querySelector('[data-field="distance"]')
+    const paceGroup = document.querySelector('[data-field="pace"]')
+    const speedGroup = document.querySelector('[data-field="speed"]')
+    expect(distanceGroup?.classList.contains('calculated')).toBe(true)
+    expect(paceGroup?.classList.contains('calculated')).toBe(false)
+    expect(speedGroup?.classList.contains('calculated')).toBe(false)
   })
 
   it('should respond to field row clicks', () => {
-    const paceRow = document.querySelector('[data-field="pace"]') as HTMLElement
-    const distanceRow = document.querySelector('[data-field="distance"]')
-    const speedRow = document.querySelector('[data-field="speed"]')
+    const paceGroup = document.querySelector(
+      '[data-field="pace"]'
+    ) as HTMLElement
+    const distanceGroup = document.querySelector('[data-field="distance"]')
+    const speedGroup = document.querySelector('[data-field="speed"]')
 
     // Initially distance is calculated, pace and speed are not
-    expect(distanceRow?.classList.contains('calculated')).toBe(true)
-    expect(paceRow?.classList.contains('calculated')).toBe(false)
-    expect(speedRow?.classList.contains('calculated')).toBe(false)
+    expect(distanceGroup?.classList.contains('calculated')).toBe(true)
+    expect(paceGroup?.classList.contains('calculated')).toBe(false)
+    expect(speedGroup?.classList.contains('calculated')).toBe(false)
 
-    // Click the pace row
-    paceRow.click()
+    // Click the pace input row (we need to click the field-input-row inside the group)
+    const paceInputRow = paceGroup.querySelector(
+      '.field-input-row'
+    ) as HTMLElement
+    paceInputRow.click()
 
     // Now pace and speed should be calculated, distance should not
-    expect(paceRow?.classList.contains('calculated')).toBe(true)
-    expect(speedRow?.classList.contains('calculated')).toBe(true)
-    expect(distanceRow?.classList.contains('calculated')).toBe(false)
+    expect(paceGroup?.classList.contains('calculated')).toBe(true)
+    expect(speedGroup?.classList.contains('calculated')).toBe(true)
+    expect(distanceGroup?.classList.contains('calculated')).toBe(false)
   })
 })
 
@@ -258,8 +265,13 @@ describe('PaceCalculatorApp Input Handling', () => {
     expect(distanceInput.disabled).toBe(true)
 
     // But we can test that when we switch to calculating something else, distance becomes editable
-    const paceRow = document.querySelector('[data-field="pace"]') as HTMLElement
-    paceRow.click() // Switch to calculating pace/speed
+    const paceGroup = document.querySelector(
+      '[data-field="pace"]'
+    ) as HTMLElement
+    const paceInputRow = paceGroup.querySelector(
+      '.field-input-row'
+    ) as HTMLElement
+    paceInputRow.click() // Switch to calculating pace/speed
 
     expect(distanceInput.disabled).toBe(false)
 
