@@ -22,6 +22,7 @@ interface AppState {
 
 class PaceCalculatorApp {
   private state: AppState
+  private isDragging: boolean = false
   private elements!: {
     paceInput: HTMLInputElement
     speedInput: HTMLInputElement
@@ -194,16 +195,34 @@ class PaceCalculatorApp {
       }
     })
 
+    // Track drag operations to prevent accidental field switching
+    document.addEventListener('mousedown', () => {
+      this.isDragging = false
+    })
+
+    document.addEventListener('mousemove', e => {
+      if (e.buttons > 0) {
+        this.isDragging = true
+      }
+    })
+
     // Make entire field rows clickable (except when clicking on input fields)
     const fieldRows = document.querySelectorAll('.field-row')
     fieldRows.forEach(row => {
       row.addEventListener('click', e => {
         const target = e.target as HTMLElement
+
         // Don't trigger if clicking on input field or if it's the track-lap-hidden distance field
         if (
           target.classList.contains('field-input') ||
           row.classList.contains('track-lap-hidden')
         ) {
+          return
+        }
+
+        // Don't trigger if this was the end of a drag operation
+        if (this.isDragging) {
+          this.isDragging = false
           return
         }
 

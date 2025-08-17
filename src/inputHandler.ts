@@ -9,9 +9,15 @@ export class NumericInput {
   }
 
   private setupEventListeners() {
+    this.input.addEventListener('focus', this.handleFocus.bind(this))
     this.input.addEventListener('keydown', this.handleKeyDown.bind(this))
     this.input.addEventListener('input', this.handleInput.bind(this))
     this.input.addEventListener('blur', this.handleBlur.bind(this))
+  }
+
+  private handleFocus() {
+    // Select all on focus for easy replacement
+    this.input.select()
   }
 
   private handleBlur() {
