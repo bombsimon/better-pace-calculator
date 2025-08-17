@@ -11,6 +11,10 @@ body {
   min-height: 100vh;
   color: #333;
   padding: 1rem;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
 }
 
 #app {
@@ -99,6 +103,8 @@ h1 {
   transition: border-color 0.2s ease;
   min-width: 0;
   cursor: text;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
 }
 
 .field-input:focus {
@@ -230,6 +236,8 @@ h1 {
     margin: 0;
     border-radius: 8px;
     min-height: calc(100vh - 1rem);
+    max-width: none;
+    width: 100%;
   }
 
   .field-row {
@@ -319,6 +327,25 @@ h1 {
   .track-lap-toggle input[type='checkbox'] {
     width: 18px;
     height: 18px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  #app {
+    max-width: 800px;
+    padding: 1rem 2rem;
+  }
+
+  .calculator-container {
+    gap: 1rem;
+  }
+
+  .field-row {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .instructions {
+    margin-top: 1rem;
   }
 }
 

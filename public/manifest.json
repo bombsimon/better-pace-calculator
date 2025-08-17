@@ -1,0 +1,34 @@
+{
+  "name": "Running Pace Calculator",
+  "short_name": "Pace Calc",
+  "description": "Calculate running pace, time, and distance",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "health", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Quick Calculate",
+      "short_name": "Calculate",
+      "description": "Open pace calculator",
+      "url": "./",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
